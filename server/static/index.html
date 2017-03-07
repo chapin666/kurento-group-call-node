@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>LYCAM+ Groupcall</title>
+</head>local_video
+
+<body>
+    
+    <h1>LYCAM+ Groupcall</h1>
+    <div class="container" id="container">
+
+        <video id="local_video" width="320" height="240" autoplay poster="img/webrtc.png"></video>
+
+        <br />
+
+        <input type="text" name="userName" value="" id="userName" placeholder="Username" />
+        <button id="register" onClick="register()">
+            Register
+        </button>
+        
+        <br />
+
+        <input type="text" disabled="disabled" name="room"
+            value="" id="roomName" placeholder="Room">
+
+        <button id="joinRoom" disabled="disabled" onClick="joinRoom()">
+            Join Room
+        </button>
+        
+        <br />
+        <!--
+        <input type="text" disabled="disabled" name="otherUserName" value="" id="otherUserName"
+            placeholder="Other registered username">
+        <button id="sendInvite" disabled="disabled" onClick="call()">Send invite</button><br />
+        <button id="startRecording" disabled="disabled" onClick="startRecording()">Start recording</button>
+        <button id="stopRecording" disabled="disabled" onClick="stopRecording()">Stop recording</button><br />
+        -->
+
+        <button id="leaveRoom" disabled="disabled" onClick="leaveRoom()">
+            Leave room
+        </button>
+        
+        <div id="video_list"></div>
+        
+    </div>
+
+    <script src="./bower_components/webrtc-adapter/adapter.js"></script>
+    <script src="./bower_components/kurento-utils/js/kurento-utils.min.js"></script>
+    <script src="./bower_components/socket.io-client/dist/socket.io.min.js"></script>
+    <script src="./js/participants.js"></script>
+    <script src="./js/index.js"></script>
+
+</body>
+</html>

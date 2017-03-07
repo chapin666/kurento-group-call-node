@@ -1,0 +1,18 @@
+{
+  "name": "lycamplus-groupcall",
+  "version": "1.0.0",
+  "description": "lycamplus group call",
+  "main": "index.js",
+  "author": "chapin",
+  "license": "MIT",
+  "dependencies": {
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-es2015": "^6.22.0",
+    "babel-preset-stage-3": "^6.22.0",
+    "babel-register": "^6.23.0",
+    "express": "^4.15.0",
+    "kurento-client": "^6.6.0",
+    "minimist": "^1.2.0",
+    "socket.io": "^1.7.3"
+  }
+}

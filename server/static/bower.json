@@ -1,0 +1,21 @@
+{
+  "name": "static",
+  "authors": [
+    "ChengBin <997155658@qq.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "MIT",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "webrtc-adapter": "adapter.js#0.2.9",
+    "kurento-utils": "^6.6.1"
+  }
+}
