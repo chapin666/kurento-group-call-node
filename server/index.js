@@ -164,15 +164,22 @@ function getRoom(roomName, callback) {
                 if (error) {
                     return callback(error);
                 }
-                room = {
-                    name: roomName,
-                    pipeline: pipeline,
-                    participants: {},
-                    kurentoClient: kurentoClient
-                };
 
-                rooms[roomName] = room;
-                callback(null, room);
+                pipeline.create('Composite', (error, composite) => {
+                    if (error) {
+                        return callback(error);
+                    }
+                    room = {
+                        name: roomName,
+                        pipeline: pipeline,
+                        participants: {},
+                        kurentoClient: kurentoClient,
+                        composite: composite
+                    };
+
+                    rooms[roomName] = room;
+                    callback(null, room);
+                });
             });
         });
     } else {
@@ -256,7 +263,15 @@ function join(socket, room, callback) {
         // register user to room
         room.participants[userSession.id] = userSession;
 
-        callback(null, userSession);
+        room.composite.createHubPort((error, hubPort) => {
+            if (error) {
+                return callback(error);
+            }
+            userSession.setHubPort(hubPort);
+            userSession.outgoingMedia.connect(userSession.hubPort);
+
+            callback(null, userSession);
+        });
     });
 }
 
@@ -428,12 +443,16 @@ function getEndpointForUser(userSession, sender, callback) {
                     });
                 });
 
-                sender.outgoingMedia.connect(incomingMedia, error => {
+                sender.hubPort.connect(incomingMedia);
+
+                callback(null, incomingMedia);
+
+                /*sender.outgoingMedia.connect(incomingMedia, error => {
                     if (error) {
                         callback(error);
                     }
                     callback(null, incomingMedia);
-                });
+                });*/
             });
         })
     } else {

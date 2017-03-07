@@ -18,6 +18,7 @@ export default class Session {
         this.outgoingMedia = null;
         this.incomingMedia = {};
         this.iceCandidateQueue = {};
+        this.hubPort = null;
     }
 
     /**
@@ -77,6 +78,14 @@ export default class Session {
      */
     setRoomName(roomName) {
         this.roomName = roomName; 
+    }
+
+    /**
+     * 
+     * @param {*} hubPort 
+     */
+    setHubPort(hubPort) {
+        this.hubPort = hubPort;
     }
 
 }
