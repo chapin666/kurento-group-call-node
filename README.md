@@ -1,4 +1,4 @@
-# kurento-group-call-node (SFU)
+# kurento-group-call-node 
 
 ### branch checkout
 ```
