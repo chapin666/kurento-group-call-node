@@ -1,5 +1,5 @@
 
-const socket = io('https://localhost:3000');
+const socket = io('https://'+  location.host);
 
 const participants = {};
 
