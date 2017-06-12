@@ -13,7 +13,7 @@ git checkout mcu
 ```
 npm install yarn
 
-yarn install
+yarn
 
 cd server/static/
 
