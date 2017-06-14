@@ -79,7 +79,7 @@ io.on('connection', socket => {
                 });
                 break;
             case 'onIceCandidate':
-                addIceCandidate(message, (error) => {
+                addIceCandidate(socket, message, (error) => {
                     if (error) {
                         console.error(error);
                     }
@@ -109,7 +109,7 @@ function joinRoom(socket, message, callback) {
         }
         // join user to room
         join(socket, room, message.name, (err, user) => {
-            console.log(`join success : ${user.id}`);
+            console.log(`join success : ${user.name}`);
             if (err) {
                 callback(err);
                 return;
@@ -220,8 +220,8 @@ function join(socket, room, userName, callback) {
         for (let i in usersInRoom) {
             if (usersInRoom[i].name != userSession.name) {
                 usersInRoom[i].sendMessage({
-                        id: 'newParticipantArrived',
-                        name: userSession.name
+                    id: 'newParticipantArrived',
+                    name: userSession.name
                 });
             }
         }
@@ -258,6 +258,7 @@ function join(socket, room, userName, callback) {
 function receiveVideoFrom(socket, senderName, sdpOffer, callback) {
     let userSession = userRegister.getById(socket.id);
     let sender = userRegister.getByName(senderName);
+
 
     getEndpointForUser(userSession, sender, (error, endpoint) => {
         if (error) {
@@ -355,12 +356,14 @@ function getKurentoClient(callback) {
 }
 
 /**
- * Add ICE candidate, required for WebRTC calls
+ *  Add ICE candidate, required for WebRTC calls
  * 
- * @param {object} message 
+ * @param {*} socket 
+ * @param {*} message 
+ * @param {*} callback 
  */
-function addIceCandidate(message, callback) {
-    let user = userRegister.getByName(message.sender);
+function addIceCandidate(socket, message, callback) {
+    let user = userRegister.getById(socket.id);
     if (user != null) {
         // assign type to IceCandidate
         let candidate = kurento.register.complexTypes.IceCandidate(message.candidate);
@@ -406,8 +409,8 @@ function getEndpointForUser(userSession, sender, callback) {
                 }
 
                 console.log(`user: ${userSession.name} successfully create pipeline`);
-                incoming.setMaxVideoRecvBandwidth(100);
-                incoming.setMinVideoRecvBandwidth(20);
+                incoming.setMaxVideoRecvBandwidth(300);
+                incoming.setMinVideoRecvBandwidth(100);
                 userSession.incomingMedia[sender.name] = incoming;
                 
 
