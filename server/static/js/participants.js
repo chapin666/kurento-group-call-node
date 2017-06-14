@@ -84,7 +84,7 @@ function Participant(name) {
 
 
 	this.onIceCandidate = function (candidate, wp) {
-		  console.log("Local candidate" + JSON.stringify(candidate));
+		  console.log("Local candidate" + candidate);
 
 		  var message = {
 		    id: 'onIceCandidate',
