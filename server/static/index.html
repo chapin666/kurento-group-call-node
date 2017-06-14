@@ -4,54 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>LYCAM+ Groupcall</title>
-</head>local_video
+    <title>Kurento Group Call Node</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
 
 <body>
-    
-    <h1>LYCAM+ Groupcall</h1>
-    <div class="container" id="container">
 
-        <video id="local_video" width="320" height="240" autoplay poster="img/webrtc.png"></video>
+	<div id="container">
+		<div id="wrapper">
+			<div id="join" class="animate join">
+				<h1>Join a Room</h1>
+				<form onsubmit="register(); return false;" accept-charset="UTF-8">
+					<p>
+						<input type="text" name="name" value="" id="name"
+							placeholder="Username" required>
+					</p>
+					<p>
+						<input type="text" name="room" value="" id="roomName"
+							placeholder="Room" required>
+					</p>
+					<p class="submit">
+						<input type="submit" name="commit" value="Join!">
+					</p>
+				</form>
+			</div>
+			<div id="room" style="display: none;">
+				<h2 id="room-header"></h2>
+				<div id="participants"></div>
+				<input type="button" id="button-leave" onmouseup="leaveRoom();"
+					value="Leave room">
+			</div>
+		</div>
+	</div>
 
-        <br />
-
-        <input type="text" name="userName" value="" id="userName" placeholder="Username" />
-        <button id="register" onClick="register()">
-            Register
-        </button>
-        
-        <br />
-
-        <input type="text" disabled="disabled" name="room"
-            value="" id="roomName" placeholder="Room">
-
-        <button id="joinRoom" disabled="disabled" onClick="joinRoom()">
-            Join Room
-        </button>
-        
-        <br />
-        <!--
-        <input type="text" disabled="disabled" name="otherUserName" value="" id="otherUserName"
-            placeholder="Other registered username">
-        <button id="sendInvite" disabled="disabled" onClick="call()">Send invite</button><br />
-        <button id="startRecording" disabled="disabled" onClick="startRecording()">Start recording</button>
-        <button id="stopRecording" disabled="disabled" onClick="stopRecording()">Stop recording</button><br />
-        -->
-
-        <button id="leaveRoom" disabled="disabled" onClick="leaveRoom()">
-            Leave room
-        </button>
-        
-        <div id="video_list"></div>
-        
-    </div>
-
-    <script src="./bower_components/webrtc-adapter/adapter.js"></script>
+	<script src="./bower_components/socket.io-client/dist/socket.io.js"></script>
+    <script src="./bower_components/adapter.js/adapter.js"></script>
     <script src="./bower_components/kurento-utils/js/kurento-utils.min.js"></script>
-    <script src="./bower_components/socket.io-client/dist/socket.io.min.js"></script>
-    <script src="./js/participants.js"></script>
     <script src="./js/index.js"></script>
+	<script src="./js/participants.js"></script>
+    
 
 </body>
 </html>
