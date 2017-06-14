@@ -9,8 +9,8 @@ export default class Register {
      * 
      */
     constructor() {
-        this.usersById = {};
         this.usersByName = {};
+        this.userSessionIds = {};
     }
 
     /**
@@ -19,57 +19,32 @@ export default class Register {
      * @param {object} user 
      */
     register(user) {
-        this.usersById[user.id] = user;
         this.usersByName[user.name] = user;
+        this.userSessionIds[user.id] = user;
     }
 
     /**
      * 
-     * @param {string} id 
+     * @param {string} name
      */
-    unregister(id) {
-        let user = this.getById(id);
+    unregister(name) {
+        let user = this.getByName(name);
         if (user) {
-            delete this.usersById[id];
-        }
-        if (user && this.getByName(user.name)) {
             delete this.usersByName[user.name];
+            delete this.userSessionIds[user.id];
         }
     }
 
     /**
      * 
-     * @param {*} id 
+     * @param {*} name
      */
-    removeById(id) {
-        let userSession = this.usersById[id];
-        if (!userSession) {
-            return;
+    removeByName(name) {
+        let user = this.getByName(name);
+        if (user) {
+            delete this.usersByName[user.name];
+            delete this.userSessionIds[user.id];
         }
-        delete this.usersById[id];
-        delete this.usersByName[userSession.name];
-    }
-
-    /**
-     * 
-     * @param {string} room 
-     */
-    getUsersByRoom(room) {
-        let userList = this.usersByName;
-        let usersInRoomList = [];
-        for (let i in userList) {
-            if (userList[i].room === room) {
-                usersInRoomList.push(userList[i]);
-            }
-        }
-    }
-
-    /**
-     * 
-     * @param {string} id 
-     */
-    getById(id) {
-        return this.usersById[id];
     }
 
     /**
@@ -78,5 +53,9 @@ export default class Register {
      */
     getByName(name) {
         return this.usersByName[name];
+    }
+
+    getById(id) {
+        return this.userSessionIds[id];
     }
 }

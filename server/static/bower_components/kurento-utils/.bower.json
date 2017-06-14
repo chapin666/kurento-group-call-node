@@ -17,14 +17,14 @@
     "Ivan Gracia <izanmail@gmail.com>",
     "Jesus Leganes 'piranna' <piranna@gmail.com>"
   ],
-  "version": "6.6.1",
-  "_release": "6.6.1",
+  "version": "6.6.2",
+  "_release": "6.6.2",
   "_resolution": {
     "type": "version",
-    "tag": "6.6.1",
-    "commit": "e66a8d42c0302bbf03e65ad1ad63a98651af3c4a"
+    "tag": "6.6.2",
+    "commit": "fdacdf5629bc0fcf4dd708d3ff4ba87fcc4e81e1"
   },
   "_source": "https://github.com/Kurento/kurento-utils-bower.git",
-  "_target": "^6.6.1",
+  "_target": "6.6.2",
   "_originalSource": "kurento-utils"
 }

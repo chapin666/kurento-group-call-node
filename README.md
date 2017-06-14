@@ -11,13 +11,7 @@ git checkout mcu
 
 ### install
 ```
-npm install yarn
-
-yarn
-
-cd server/static/
-
-bower install
+npm run get
 ```
 
 ### edit

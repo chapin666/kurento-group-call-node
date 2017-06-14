@@ -15,7 +15,8 @@
     "tests"
   ],
   "dependencies": {
-    "webrtc-adapter": "adapter.js#0.2.9",
-    "kurento-utils": "^6.6.1"
+    "socket.io-client": "2.0.3",
+    "adapter.js": "v0.2.9",
+    "kurento-utils": "6.6.2"
   }
 }
