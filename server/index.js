@@ -33,7 +33,7 @@ let app = express();
 let asUrl = url.parse(argv.as_uri);
 let port = asUrl.port;
 let server = https.createServer(options, app).listen(port, () => {
-    console.log('LYCAMPLUS Group Call started');
+    console.log('Kurento Group Call started');
     console.log('Open %s with a WebRTC capable brower.', url.format(asUrl));
 });
 
