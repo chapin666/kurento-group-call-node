@@ -43,7 +43,7 @@ const argv = minimst(process.argv.slice(2), {
 
 
 ### Mobile Client ( React Native )
-```
+
 [kurento-group-call-react-native](https://github.com/chapin666/kurento-group-call-react-native)
 
 server-side Must be trusted https
@@ -51,4 +51,3 @@ server-side Must be trusted https
 or
 
 modify the server-side code to http (Only Firefox support)
-```
