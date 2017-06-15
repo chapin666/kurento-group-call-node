@@ -2,6 +2,7 @@
 import path from 'path';
 import url from 'url';
 import https from 'https';
+import http from 'http';
 import fs from 'fs'; 
 
 import express from 'express';
@@ -11,11 +12,14 @@ import minimst from 'minimist';
 
 import { Session, Register } from './lib';
 
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
 let userRegister = new Register();
 let rooms = {};
 
 const argv = minimst(process.argv.slice(2), {
     default: {
+        //as_uri: 'http://localhost:3000',
         as_uri: 'https://localhost:3000',
         ws_uri: 'ws://54.223.104.239:8888/kurento'
     }
@@ -36,6 +40,10 @@ let server = https.createServer(options, app).listen(port, () => {
     console.log('Kurento Group Call started');
     console.log('Open %s with a WebRTC capable brower.', url.format(asUrl));
 });
+
+// let server = http.createServer(app).listen(port, () => {
+//      console.log('Kurento Group Call started');
+// });
 
 /////////////////////////// websocket ///////////////////////////////
 
