@@ -1,5 +1,11 @@
 # kurento-group-call-node
 
+```
+This code is an example, I did not optimize it.
+
+For more information please contact me.
+```
+
 ### branch checkout
 ```
 git checkout sfu
