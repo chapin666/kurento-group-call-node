@@ -34,6 +34,6 @@
     "commit": "10ba31ea2d874eeee51aba45e6eacced6fc56636"
   },
   "_source": "https://github.com/webrtc/adapter.git",
-  "_target": "0.2.9",
+  "_target": "v0.2.9",
   "_originalSource": "adapter.js"
 }

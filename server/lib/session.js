@@ -6,17 +6,22 @@
 export default class Session {
 
     /**
-     * constructor method
+     * constructor
      * 
-     * @param {string} id       session ID
-     * @param {object} socket    Socket
+     * @param {*} socket 
+     * @param {*} userName 
+     * @param {*} roomName 
      */
-    constructor(id, socket) {
-        this.id = id;
+    constructor(socket, userName, roomName) {
+        this.id = socket.id;
         this.socket = socket;
-        this.roomName = null;
+
+        this.name = userName;
+        this.roomName = roomName;
+
         this.outgoingMedia = null;
         this.incomingMedia = {};
+
         this.iceCandidateQueue = {};
         this.hubPort = null;
     }
@@ -28,7 +33,7 @@ export default class Session {
      */
     addIceCandidate(data, candidate) {
         // self
-        if (data.sender === this.id) {
+        if (data.sender === this.name) {
             // have outgoing media.
             if (this.outgoingMedia) {
                 console.log(` add candidate to self : %s`, data.sender);
@@ -72,12 +77,15 @@ export default class Session {
         }
     }
 
+
     /**
      * 
-     * @param {*} roomName 
+     * setOutgoingMedia
+     * 
+     * @param {*} outgoingMedia 
      */
-    setRoomName(roomName) {
-        this.roomName = roomName; 
+    setOutgoingMedia(outgoingMedia) {
+        this.outgoingMedia = outgoingMedia;
     }
 
     /**

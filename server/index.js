@@ -11,13 +11,13 @@ import minimst from 'minimist';
 
 import { Session, Register } from './lib';
 
-let userRegister = new Register;
+let userRegister = new Register();
 let rooms = {};
 
 const argv = minimst(process.argv.slice(2), {
     default: {
-        as_uri: 'https://localhost:3000',
-        ws_uri: 'ws://127.0.0.1:8888/kurento'
+        as_uri: 'https://127.0.0.1:3000',
+        ws_uri: 'ws://54.223.104.239:8888/kurento'
     }
 });
 
@@ -33,75 +33,57 @@ let app = express();
 let asUrl = url.parse(argv.as_uri);
 let port = asUrl.port;
 let server = https.createServer(options, app).listen(port, () => {
-    console.log('LYCAMPLUS Group Call started');
+    console.log('Group Call started');
     console.log('Open %s with a WebRTC capable brower.', url.format(asUrl));
 });
 
 /////////////////////////// websocket ///////////////////////////////
 
-let io = socketIO(server).path('/group');
+let io = socketIO(server).path('/groupcall');
 let wsUrl = url.parse(argv.ws_uri).href;
 
 io.on('connection', socket => {
-    let userList = '';
-    
-    for (let userId in userRegister.usersById) {
-        userList += ' ' + userId + ',';
-    }
-
-    // send id
-    socket.emit('id', socket.id);
 
     // error handle
-    socket.on('error', error => {
-        console.error(`Connection %s error : %s`, socket.id, error);
-        /*leaveRoom(socket.id, () => {
-            console.log(`%s leave room`, socket.id);
-        });*/
+    socket.on('error', err => {
+        console.error(`Connection %s error : %s`, socket.id, err);
     });
 
     socket.on('disconnect', data => {
         console.log(`Connection : %s disconnect`, data);
-        /*leaveRoom(socket.id, () => {
-            let userSession = userRegister.getById(socket.id);
-            stop(userSession.id);
-        });*/
     });
 
     socket.on('message', message => {
         console.log(`Connection: %s receive message`, message.id);
 
         switch (message.id) {
-            case 'register':
-                console.log(`registering ${socket.id}`);
-                register(socket, message.name, (error) => {
-                    console.log();
-                });
-                break;
             case 'joinRoom':
-                console.log(`${socket.id} joinRoom : ${message.roomName}`);
-                joinRoom(socket, message.roomName, err => {
+                joinRoom(socket, message, err => {
                     if (err) {
                         console.log(`join Room error ${err}`);
                     }
                 });
                 break;
             case 'receiveVideoFrom':
-                receiveVideoFrom(socket, message.sender, message.sdpOffer, () => {
-
+                receiveVideoFrom(socket, message.sender, message.sdpOffer, (err) => {
+                    if (err) {
+                        console.error(err);
+                    }
                 });
                 break;
             case 'leaveRoom':
-                leaveRoom(socket.id);
-                break;
-            case 'call':
-                break;
-            case 'startRecording':
-                 break;
-            case 'stopRecording':
+                leaveRoom(socket, err => {
+                    if (err) {
+                        console.error(err);
+                    }
+                });
                 break;
             case 'onIceCandidate':
-                addIceCandidate(socket, message);
+                addIceCandidate(socket, message, err => {
+                    if (err) {
+                        console.error(err);
+                    } 
+                });
                 break;
             default:
                 socket.emit({id: 'error', message: `Invalid message %s. `, message});
@@ -110,36 +92,24 @@ io.on('connection', socket => {
 
 });
 
-
-/**
- * 
- * @param {object} socket 
- * @param {string} name 
- */
-function register(socket, name, callback) {
-    let userSession = new Session(socket.id, socket);
-    userSession.name = name;
-    userRegister.register(userSession);
-    userSession.sendMessage({
-        id: 'registered',
-        data: `Successfully register ${socket.id}`
-    });
-    console.log(userRegister);
-    callback();
-}
-
 /**
  * 
  * @param {*} socket 
  * @param {*} roomName 
  */
-function joinRoom(socket, roomName, callback) {
-    getRoom(roomName, (error, room) => {
+function joinRoom(socket, message, callback) {
+    getRoom(message.roomName, (error, room) => {
         if (error) {
             callback(error);
+            return;
         }
-        join(socket, room, (err, user) => {
-            console.log(`join success : ${user.id}`);
+        join(socket, room, message.name, (err, user) => {
+            console.log(`join success : ${user.name}`);
+            if (err) {
+                callback(err);
+                return;
+            }
+            callback();
         });
     });
 }
@@ -189,15 +159,22 @@ function getRoom(roomName, callback) {
 }
 
 /**
+ * 
  * join call room
  * 
- * @param {object} socket 
- * @param {object} room 
- * @param {function} callback 
+ * @param {*} socket 
+ * @param {*} room 
+ * @param {*} userName 
+ * @param {*} callback 
  */
-function join(socket, room, callback) {
-    let userSession = userRegister.getById(socket.id);
-    userSession.setRoomName(room.name);
+function join(socket, room, userName, callback) {
+
+    // add user to session
+    let userSession = new Session(socket, userName, room.name);
+
+    // register
+    userRegister.register(userSession);
+
 
     room.pipeline.create('WebRtcEndpoint', (error, outgoingMedia) => {
         if (error) {
@@ -209,14 +186,14 @@ function join(socket, room, callback) {
         }
 
         // else
-        outgoingMedia.setMaxVideoRecvBandwidth(100);
-        outgoingMedia.setMinVideoRecvBandwidth(20);
-        userSession.outgoingMedia = outgoingMedia;
+        outgoingMedia.setMaxVideoRecvBandwidth(300);
+        outgoingMedia.setMinVideoRecvBandwidth(100);
+        userSession.setOutgoingMedia(outgoingMedia);
     
 
         // add ice candidate the get sent before endpoint is established
         // socket.id : room iceCandidate Queue
-        let iceCandidateQueue = userSession.iceCandidateQueue[socket.id];
+        let iceCandidateQueue = userSession.iceCandidateQueue[userSession.name];
         if (iceCandidateQueue) {
             while (iceCandidateQueue.length) {
                 let message = iceCandidateQueue.shift();
@@ -233,42 +210,47 @@ function join(socket, room, callback) {
             let candidate = kurento.register.complexTypes.IceCandidate(event.candidate);
             userSession.sendMessage({
                 id: 'iceCandidate',
-                sessionId: userSession.id,
+                name: userSession.name,
                 candidate: candidate
             });
         });
 
         // notify other user that new user is joing
-        let data = {
-            id: 'newParticipantArrived',
-            new_user_id: userSession.id
-        };
         let usersInRoom = room.participants;
         for (let i in usersInRoom) {
-            usersInRoom[i].sendMessage(data);
-        }
-
-        let existingUserIds = [];
-        for (let i in room.participants) {
-            existingUserIds.push(usersInRoom[i].id);
+            if (usersInRoom[i].name != userSession.name) {
+                usersInRoom[i].sendMessage({
+                    id: 'newParticipantArrived',
+                    name: userSession.name
+                });
+            }
         }
 
         // send list of current user in the room to current participant
+        let existingUsers = [];
+        for (let i in usersInRoom) {
+            if (usersInRoom[i].name != userSession.name) {
+                existingUsers.push(usersInRoom[i].name);
+            }
+        }
         userSession.sendMessage({
             id: 'existingParticipants',
-            data: existingUserIds,
+            data: existingUsers,
             roomName: room.name
         });
 
         // register user to room
-        room.participants[userSession.id] = userSession;
+        room.participants[userSession.name] = userSession;
 
         room.composite.createHubPort((error, hubPort) => {
             if (error) {
                 return callback(error);
             }
             userSession.setHubPort(hubPort);
+
             userSession.outgoingMedia.connect(userSession.hubPort);
+            //userSession.hubPort.connect(userSession.outz);
+           
 
             callback(null, userSession);
         });
@@ -277,24 +259,23 @@ function join(socket, room, callback) {
 
 
 // receive video from sender
-function receiveVideoFrom(socket, senderId, sdpOffer, callback) {
+function receiveVideoFrom(socket, senderName, sdpOffer, callback) {
     let userSession = userRegister.getById(socket.id);
-    let sender = userRegister.getById(senderId);
+    let sender = userRegister.getByName(senderName);
 
     getEndpointForUser(userSession, sender, (error, endpoint) => {
         if (error) {
             callback(error);
         }
-        console.log("endpint-----", endpoint);
-
+       
         endpoint.processOffer(sdpOffer, (error, sdpAnswer) => {
-            console.log(`process offer from ${senderId} to ${userSession.id}`);
+            console.log(`process offer from ${senderName} to ${userSession.id}`);
             if (error) {
                 return callback(error);
             }
             let data = {
                 id: 'receiveVideoAnswer',
-                sessionId: sender.id,
+                name: sender.name,
                 sdpAnswer: sdpAnswer
             };
             userSession.sendMessage(data);
@@ -314,8 +295,8 @@ function receiveVideoFrom(socket, senderId, sdpOffer, callback) {
 /**
  * 
  */
-function leaveRoom(sessionId, callback) {
-    var userSession = userRegistry.getById(sessionId);
+function leaveRoom(socket, callback) {
+    var userSession = userRegister.getById(socket.id);
 
     if (!userSession) {
         return;
@@ -329,8 +310,9 @@ function leaveRoom(sessionId, callback) {
 
     console.log('notify all user that ' + userSession.id + ' is leaving the room ' + room.name);
     var usersInRoom = room.participants;
-    delete usersInRoom[userSession.id];
+    delete usersInRoom[userSession.name];
     userSession.outgoingMedia.release();
+
     // release incoming media for the leaving user
     for (var i in userSession.incomingMedia) {
         userSession.incomingMedia[i].release();
@@ -339,13 +321,13 @@ function leaveRoom(sessionId, callback) {
 
     var data = {
         id: 'participantLeft',
-        sessionId: userSession.id
+        name: userSession.name
     };
     for (var i in usersInRoom) {
         var user = usersInRoom[i];
         // release viewer from this
-        user.incomingMedia[userSession.id].release();
-        delete user.incomingMedia[userSession.id];
+        user.incomingMedia[userSession.name].release();
+        delete user.incomingMedia[userSession.name];
 
         // notify all user in the room
         user.sendMessage(data);
@@ -357,6 +339,8 @@ function leaveRoom(sessionId, callback) {
         delete rooms[userSession.roomName];
     }
     delete userSession.roomName;
+
+    callback();
 }
 
 
@@ -366,7 +350,6 @@ function leaveRoom(sessionId, callback) {
  * @param {function} callback 
  */
 function getKurentoClient(callback) {
-    console.log(wsUrl);
     kurento(wsUrl, (error, kurentoClient) => {
         if (error) {
             let message = `Could not find media server at address ${wsUrl}`;
@@ -379,36 +362,49 @@ function getKurentoClient(callback) {
 /**
  * Add ICE candidate, required for WebRTC calls
  * 
- * @param {object} socket 
- * @param {object} message 
+ * @param {*} socket 
+ * @param {*} message 
+ * @param {*} callback 
  */
-function addIceCandidate(socket, message) {
+function addIceCandidate(socket, message, callback) {
     let user = userRegister.getById(socket.id);
     if (user != null) {
         // assign type to IceCandidate
         let candidate = kurento.register.complexTypes.IceCandidate(message.candidate);
         user.addIceCandidate(message, candidate);
+        callback();
     } else {
-        console.error(`ice candidate with no user receive : ${socket.id}`);
+        console.error(`ice candidate with no user receive : ${message.sender}`);
+        callback(new Error("addIceCandidate failed."));
     }
 }
 
 
+/**
+ * 
+ * @param {*} userSession 
+ * @param {*} sender 
+ * @param {*} callback 
+ */
 function getEndpointForUser(userSession, sender, callback) {
 
-    if (userSession.id === sender.id) {   
+    if (userSession.name === sender.name) {   
         return callback(null, userSession.outgoingMedia);
     }
 
-    let incoming = userSession.incomingMedia[sender.id];
+    let incoming = userSession.incomingMedia[sender.name];
     
     if (incoming == null) {
-        console.log(`user : ${userSession.id} create endpoint to receive video from : ${sender.id}`);
+        console.log(`user : ${userSession.name} create endpoint to receive video from : ${sender.name}`);
+        
+        // getRoom
         getRoom(userSession.roomName, (error, room) => {
             if (error) {
                 return callback(error);
             }
+            // 　create WebRtcEndpoint for sender user
             room.pipeline.create('WebRtcEndpoint', (error, incomingMedia) => {
+                
                 if (error) {
                     if (Object.keys(room.participants).length === 0) {
                         room.pipeline.release();
@@ -417,42 +413,35 @@ function getEndpointForUser(userSession, sender, callback) {
                 }
 
                 console.log(`user: ${userSession.id} successfully create pipeline`);
-                incomingMedia.setMaxVideoRecvBandwidth(100);
-                incomingMedia.setMinVideoRecvBandwidth(20);
-                userSession.incomingMedia[sender.id] = incomingMedia;
+                incomingMedia.setMaxVideoRecvBandwidth(300);
+                incomingMedia.setMinVideoRecvBandwidth(100);
+                userSession.incomingMedia[sender.name] = incomingMedia;
                 
 
                 // add ice candidate the get sent before endpoints is establlished
-                let iceCandidateQueue = userSession.iceCandidateQueue[sender.id];
+                let iceCandidateQueue = userSession.iceCandidateQueue[sender.name];
                 if (iceCandidateQueue) {
                     while (iceCandidateQueue.length) {
                         let message = iceCandidateQueue.shift();
-                        console.log(`user: ${userSession.id} collect candidate for ${message.data.sender}`);
+                        console.log(`user: ${userSession.name} collect candidate for ${message.data.sender}`);
                         incomingMedia.addIceCandidate(message.candidate);
                     }
                 }
 
                 incomingMedia.on('OnIceCandidate', event => {
                     // ka ka ka ka ka
-                    // console.log(`generate incoming media candidate: ${userSession.id} from ${sender.id}`);
+                    // console.log(`generate incoming media candidate: ${userSession.id} from ${sender.name}`);
                     let candidate = kurento.register.complexTypes.IceCandidate(event.candidate);
                     userSession.sendMessage({
                         id: 'iceCandidate',
-                        sessionId: sender.id,
+                        name: sender.name,
                         candidate: candidate
                     });
                 });
-
+                
                 sender.hubPort.connect(incomingMedia);
 
                 callback(null, incomingMedia);
-
-                /*sender.outgoingMedia.connect(incomingMedia, error => {
-                    if (error) {
-                        callback(error);
-                    }
-                    callback(null, incomingMedia);
-                });*/
             });
         })
     } else {

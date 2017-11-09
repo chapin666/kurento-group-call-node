@@ -7,12 +7,11 @@ var hark = require('hark');
 var EventEmitter = require('events').EventEmitter;
 var recursive = require('merge').recursive.bind(undefined, true);
 var sdpTranslator = require('sdp-translator');
-var logger = window.Logger || console;
 try {
     require('kurento-browser-extensions');
 } catch (error) {
     if (typeof getScreenConstraints === 'undefined') {
-        logger.warn('screen sharing is not available');
+        console.warn('screen sharing is not available');
         getScreenConstraints = function getScreenConstraints(sendSource, callback) {
             callback(new Error('This library is not enabled for screen sharing'));
         };
@@ -30,12 +29,12 @@ var parser = new UAParser(ua);
 var browser = parser.getBrowser();
 var usePlanB = false;
 if (browser.name === 'Chrome' || browser.name === 'Chromium') {
-    logger.info(browser.name + ': using SDP PlanB');
+    console.log(browser.name + ': using SDP PlanB');
     usePlanB = true;
 }
 function noop(error) {
     if (error)
-        logger.error(error);
+        console.error(error);
 }
 function trackStop(track) {
     track.stop && track.stop();
@@ -89,7 +88,7 @@ function removeFIDFromOffer(sdp) {
 function getSimulcastInfo(videoStream) {
     var videoTracks = videoStream.getVideoTracks();
     if (!videoTracks.length) {
-        logger.warn('No video tracks available in the video stream');
+        console.warn('No video tracks available in the video stream');
         return '';
     }
     var lines = [
@@ -248,7 +247,7 @@ function WebRtcPeer(mode, options, callback) {
         } else {
             candidate = new RTCIceCandidate(iceCandidate);
         }
-        logger.debug('Remote ICE candidate received', iceCandidate);
+        console.log('ICE candidate received');
         callback = (callback || noop).bind(this);
         addIceCandidate(candidate, callback);
     };
@@ -271,17 +270,17 @@ function WebRtcPeer(mode, options, callback) {
                 optional: [{ DtlsSrtpKeyAgreement: true }]
             };
         var constraints = recursive(browserDependantConstraints, connectionConstraints);
-        logger.info('constraints: ' + JSON.stringify(constraints));
+        console.log('constraints: ' + JSON.stringify(constraints));
         pc.createOffer(constraints).then(function (offer) {
-            logger.info('Created SDP offer');
+            console.log('Created SDP offer');
             offer = mangleSdpToAddSimulcast(offer);
             return pc.setLocalDescription(offer);
         }).then(function () {
             var localDescription = pc.localDescription;
-            logger.info('Local description set', localDescription.sdp);
+            console.log('Local description set', localDescription.sdp);
             if (multistream && usePlanB) {
                 localDescription = interop.toUnifiedPlan(localDescription);
-                logger.info('offer::origPlanB->UnifiedPlan', dumpSDP(localDescription));
+                console.log('offer::origPlanB->UnifiedPlan', dumpSDP(localDescription));
             }
             callback(null, localDescription.sdp, self.processAnswer.bind(self));
         }).catch(callback);
@@ -299,7 +298,7 @@ function WebRtcPeer(mode, options, callback) {
             remoteVideo.pause();
             remoteVideo.src = url;
             remoteVideo.load();
-            logger.info('Remote URL:', url);
+            console.log('Remote URL:', url);
         }
     }
     this.showLocalVideo = function () {
@@ -310,7 +309,7 @@ function WebRtcPeer(mode, options, callback) {
         if (dataChannel && dataChannel.readyState === 'open') {
             dataChannel.send(data);
         } else {
-            logger.warn('Trying to send data over a non-existing or closed data channel');
+            console.warn('Trying to send data over a non-existing or closed data channel');
         }
     };
     this.processAnswer = function (sdpAnswer, callback) {
@@ -321,10 +320,10 @@ function WebRtcPeer(mode, options, callback) {
             });
         if (multistream && usePlanB) {
             var planBAnswer = interop.toPlanB(answer);
-            logger.info('asnwer::planB', dumpSDP(planBAnswer));
+            console.log('asnwer::planB', dumpSDP(planBAnswer));
             answer = planBAnswer;
         }
-        logger.info('SDP answer received, setting remote description');
+        console.log('SDP answer received, setting remote description');
         if (pc.signalingState === 'closed') {
             return callback('PeerConnection is closed');
         }
@@ -341,10 +340,10 @@ function WebRtcPeer(mode, options, callback) {
             });
         if (multistream && usePlanB) {
             var planBOffer = interop.toPlanB(offer);
-            logger.info('offer::planB', dumpSDP(planBOffer));
+            console.log('offer::planB', dumpSDP(planBOffer));
             offer = planBOffer;
         }
-        logger.info('SDP offer received, setting remote description');
+        console.log('SDP offer received, setting remote description');
         if (pc.signalingState === 'closed') {
             return callback('PeerConnection is closed');
         }
@@ -354,28 +353,28 @@ function WebRtcPeer(mode, options, callback) {
             return pc.createAnswer();
         }).then(function (answer) {
             answer = mangleSdpToAddSimulcast(answer);
-            logger.info('Created SDP answer');
+            console.log('Created SDP answer');
             return pc.setLocalDescription(answer);
         }).then(function () {
             var localDescription = pc.localDescription;
             if (multistream && usePlanB) {
                 localDescription = interop.toUnifiedPlan(localDescription);
-                logger.info('answer::origPlanB->UnifiedPlan', dumpSDP(localDescription));
+                console.log('answer::origPlanB->UnifiedPlan', dumpSDP(localDescription));
             }
-            logger.info('Local description set', localDescription.sdp);
+            console.log('Local description set', localDescription.sdp);
             callback(null, localDescription.sdp);
         }).catch(callback);
     };
     function mangleSdpToAddSimulcast(answer) {
         if (simulcast) {
             if (browser.name === 'Chrome' || browser.name === 'Chromium') {
-                logger.info('Adding multicast info');
+                console.log('Adding multicast info');
                 answer = new RTCSessionDescription({
                     'type': answer.type,
                     'sdp': removeFIDFromOffer(answer.sdp) + getSimulcastInfo(videoStream)
                 });
             } else {
-                logger.warn('Simulcast is only available in Chrome browser.');
+                console.warn('Simulcast is only available in Chrome browser.');
             }
         }
         return answer;
@@ -404,10 +403,10 @@ function WebRtcPeer(mode, options, callback) {
             if (constraints === undefined) {
                 constraints = MEDIA_CONSTRAINTS;
             }
-            navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+            getUserMedia(constraints, function (stream) {
                 videoStream = stream;
                 start();
-            }).catch(callback);
+            }, callback);
         }
         if (sendSource === 'webcam') {
             getMedia(mediaConstraints);
@@ -494,7 +493,7 @@ WebRtcPeer.prototype.getRemoteStream = function (index) {
     }
 };
 WebRtcPeer.prototype.dispose = function () {
-    logger.info('Disposing WebRtcPeer');
+    console.log('Disposing WebRtcPeer');
     var pc = this.peerConnection;
     var dc = this.dataChannel;
     try {
@@ -510,7 +509,7 @@ WebRtcPeer.prototype.dispose = function () {
             pc.close();
         }
     } catch (err) {
-        logger.warn('Exception disposing webrtc peer ' + err);
+        console.warn('Exception disposing webrtc peer ' + err);
     }
     this.emit('_dispose');
 };
@@ -3803,8 +3802,7 @@ exports.parse = function(sdp) {
 
 var rng;
 
-var crypto = global.crypto || global.msCrypto; // for IE 11
-if (crypto && crypto.getRandomValues) {
+if (global.crypto && crypto.getRandomValues) {
   // WHATWG crypto-based RNG - http://wiki.whatwg.org/wiki/Crypto
   // Moderately fast, high quality
   var _rnds8 = new Uint8Array(16);
