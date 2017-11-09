@@ -1,6 +1,12 @@
 
 # kurento-group-call-node (DEFAULT SFU)
 
+```
+This code is an example, I did not optimize it.
+
+Please contact me for more information.
+```
+
 ### Required
 
 Node Version: Node 8.x
