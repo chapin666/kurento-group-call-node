@@ -3,7 +3,7 @@
 ```
 This code is an example, I did not optimize it.
 
-For more information please contact me.
+Please contact me for more information.
 ```
 
 ### branch checkout
