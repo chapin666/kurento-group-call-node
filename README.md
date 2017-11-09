@@ -44,3 +44,26 @@ const argv = minimst(process.argv.slice(2), {
  node index.js 
 
 ```
+
+### Composite & HubPort structure
+```
+                                        User
+                                         ^
+                                         |
+                                  WebRtcEndpoint
+                                         ^              
+                                         |
+                                       HubPort
+                                         ^
+                                         |
+Presenter WebRtcEndpoint -> HubPort -> Composite
+                                         |
+                                         v
+                                       HubPort
+                                         |
+                                         v
+                                  WebRtcEndpoint
+                                         |
+                                         v
+                                        User
+```
